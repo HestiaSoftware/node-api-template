@@ -1,0 +1,64 @@
+openapi: 3.0.2
+info:
+  description: "API Template"
+  version: 1.0.0
+  title: API Template
+  termsOfService: https://template.com
+  contact:
+    email: info@template.com
+  license:
+    name: MPL-2.0
+    url: https://www.mozilla.org/en-US/MPL/2.0/
+externalDocs:
+  description: API Documentation available at docs.template.com
+  url: https://docs.template.com
+servers:
+  - url: https://api.template.com
+tags:
+  - name: example
+    description: example tag
+paths:
+  /example:
+    get:
+      tags:
+        - example
+      summary: Get all examples
+      description: Get all examples
+      operationId: getExample
+      responses:
+        "200":
+          description: Returns all examples
+    post:
+      tags:
+        - example
+      summary: Creates a example
+      description: Creates a new example
+      operationId: createClient
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/Example"
+
+      responses:
+        "201":
+          description: Example created successfully
+        "409":
+          description: Example already exists
+        "422":
+          description: Invalid example data supplied
+
+
+components:
+  schemas:
+    Example:
+      type: object
+      required:
+        - requiredExample
+      properties:
+        requiredExample: 
+          type: string
+          example: Example 1
+        example: 
+          type: string
+          example: Example 2
