@@ -10,8 +10,3 @@ Example:
 ---
 * file: /routes/test/hello.js
 * route: /test/hello
-
-
-# B2 Backblaze Bucket
-Bucket name: company._id
-Filename: uuid.ext
