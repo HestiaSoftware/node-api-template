@@ -1,6 +1,5 @@
 import createError, { HttpError } from "http-errors";
 import express, { Request, Response, NextFunction } from "express";
-import walkSync from "walk-sync";
 import crypto from "crypto";
 const app = express();
 
@@ -13,7 +12,7 @@ app.use(function (req: Request, res: Response, next: NextFunction) {
     next();
 });
 
-// At some point we've gotta change this
+/* At some point we've gotta change this
 const dir = "./routes/";
 const paths = walkSync(dir, { directories: false });
 paths.forEach(function (value: string) {
@@ -26,7 +25,7 @@ paths.forEach(function (value: string) {
         // eslint-disable-next-line @typescript-eslint/no-var-requires
         app.use("/" + value_nojs, require(dir + value_nojs));
     }
-});
+});*/
 
 // catch 404 and forward to error handler
 app.use(function(req: Request , res: Response, next: NextFunction) {
