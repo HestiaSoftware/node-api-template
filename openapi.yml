@@ -47,6 +47,35 @@ paths:
           description: Example already exists
         "422":
           description: Invalid example data supplied
+  /asdasdas:
+    get:
+      tags:
+        - example
+      summary: Get all examples
+      description: Get all examples
+      operationId: getExample
+      responses:
+        "200":
+          description: Returns all examples
+    post:
+      tags:
+        - example
+      summary: Creates a example
+      description: Creates a new example
+      operationId: createClient
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/Example"
+
+      responses:
+        "201":
+          description: Example created successfully
+        "409":
+          description: Example already exists
+        "422":
+          description: Invalid example data supplied
 
 
 components:
