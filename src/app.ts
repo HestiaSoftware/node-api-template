@@ -1,6 +1,8 @@
 import createError, { HttpError } from "http-errors";
 import express, { Request, Response, NextFunction } from "express";
 import crypto from "crypto";
+import { getRoutes } from "./middleware/routing.js";
+import path from "path";
 const app = express();
 
 app.use(express.json());
@@ -12,20 +14,13 @@ app.use(function (req: Request, res: Response, next: NextFunction) {
     next();
 });
 
-/* At some point we've gotta change this
-const dir = "./routes/";
-const paths = walkSync(dir, { directories: false });
-paths.forEach(function (value: string) {
-    const value_nojs = value.slice(0, -3); //removes .js, assuming all files are .js
-    if (value.endsWith("index.js")) {
-        const value_index = value.slice(0, -8);
-        // eslint-disable-next-line @typescript-eslint/no-var-requires
-        app.use("/" + value_index, require(dir + value_nojs)); // Route: /test
-    } else {
-        // eslint-disable-next-line @typescript-eslint/no-var-requires
-        app.use("/" + value_nojs, require(dir + value_nojs));
-    }
-});*/
+const routes = getRoutes(path.join(__dirname, "routes"));
+for (let i = 0; i < routes.length; i++) {
+    const route = routes[i];
+    // eslint-disable-next-line @typescript-eslint/no-var-requires
+    app.use(route.route, require(route.file).default);
+}
+
 
 // catch 404 and forward to error handler
 app.use(function(req: Request , res: Response, next: NextFunction) {

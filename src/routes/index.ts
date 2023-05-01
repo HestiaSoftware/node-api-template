@@ -3,10 +3,6 @@ const router = express.Router();
 
 router.all("/", function(req: Request, res: Response) {
     res.json({
-        "poluino": {
-            "version": "0.1alpha",
-            "codename": "salmon"
-        },
         "author": "@openthingy",
         "request": {
             "ip": req.ip,
@@ -15,4 +11,4 @@ router.all("/", function(req: Request, res: Response) {
     });
 });
 
-module.exports = router;
+export default router;

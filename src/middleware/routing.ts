@@ -4,7 +4,7 @@ import yaml from "js-yaml";
 
 interface Route {
     route: string;
-    file: string;
+    file : string;
 }
 
 //Thanks ChatGPT
@@ -69,7 +69,7 @@ interface OpenAPI {
     };
 }
 
-export function walkDir(dirPath: string, result: string[] = []) {
+function walkDir(dirPath: string, result: string[] = []) {
     try {
         const files = fs.readdirSync(dirPath);
         
@@ -97,7 +97,7 @@ export function walkDir(dirPath: string, result: string[] = []) {
     }
 }
 
-export function getRoutes(dirPath: string) {
+function getRoutes(dirPath: string) {
     const files = walkDir(dirPath);
     const routes: Route[] = [];
 
@@ -111,7 +111,7 @@ export function getRoutes(dirPath: string) {
         else if (route.endsWith("/index")) { route = route.replace("/index", ""); }
         routes.push({
             route,
-            file
+            file,
         });
     }
 
@@ -119,10 +119,12 @@ export function getRoutes(dirPath: string) {
     return routes;
 }
 
-export function getOpenAPIRoutes(specPath: string) {
+function getOpenAPIRoutes(specPath: string) {
     const file = fs.readFileSync(specPath, "utf8");
+
     const openapi = (yaml.load(file) as OpenAPI)["paths"];
     const routes = [];
+
     for (const route in openapi) {
         routes.push(route);
     }
@@ -143,7 +145,8 @@ function checkDuplicateRoutes(routes: Route[]) {
     }
 }
 
-function checkSpecRoutes(routes: Route[], specRoutes: string[]) {
+function  checkSpecRoutes(routes: Route[], specRoutes: string[]) {
+  
     if (routes.length !== specRoutes.length) {
         if (process.env.NODE_ENV == "development" || process.env.NODE_ENV == undefined) {
             console.warn("Not the exact same number of routes"); 
@@ -153,13 +156,16 @@ function checkSpecRoutes(routes: Route[], specRoutes: string[]) {
     }
     
     for (const { route } of routes) {
+
         if (!specRoutes.includes(route)) {
+            // Only throw the error in production
             if (process.env.NODE_ENV == "development" || process.env.NODE_ENV == undefined) {
                 console.warn(`Route not found in spec: ${route}`);
             } else { 
                 throw new Error(`Route not found in spec: ${route}`); 
             }
         }
+
     }
     
 }
@@ -169,3 +175,5 @@ if (require.main === module) {
     console.log(getRoutes(path.join(__dirname, "..", "routes")));
     checkSpecRoutes(getRoutes(path.join(__dirname, "..", "routes")), getOpenAPIRoutes(path.join(__dirname, "..", "..", "openapi.yml")));
 }
+
+export { getRoutes, getOpenAPIRoutes, checkDuplicateRoutes, checkSpecRoutes };
