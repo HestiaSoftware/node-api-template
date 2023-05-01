@@ -7,7 +7,8 @@ interface Route {
     file: string;
 }
 
-interface OpenAPI { //thanks chat-gpt
+//Thanks ChatGPT
+interface OpenAPI { 
     openapi: string;
     info: {
       title: string;
@@ -68,33 +69,23 @@ interface OpenAPI { //thanks chat-gpt
     };
 }
 
-export async function getRoutes(dirPath: string, result: Route[] = []) {
+export function walkDir(dirPath: string, result: string[] = []) {
     try {
-        const files = await fs.promises.readdir(dirPath);
+        const files = fs.readdirSync(dirPath);
         
         for (let i = 0; i < files.length; i++) {
             const file = files[i];
             const fullPath = path.join(dirPath, file);
-            const stats = await fs.promises.stat(fullPath);
+            const stats =  fs.statSync(fullPath);
   
             if (stats.isDirectory()) {
                 // Recursively walk through subdirectory
-                await getRoutes(fullPath, result);
+                walkDir(fullPath, result);
             } else {
                 // Add file path to result array
                 const extension = path.extname(fullPath);
                 if (extension == ".js" || extension == ".ts") {
-                    //remove the file directory and switch to / (\\..\\routes\\a.ts -> /../routes/a.ts -> /a.ts)
-                    dirPath = dirPath.replace("\\", "/");
-                    let route = "/" + fullPath.replaceAll("\\", "/").replace(dirPath, "").replace(extension, "");
-                    if (route.endsWith("index")) {
-                        route = route.replace("/index", "/");
-                    }
-                    const object: Route = {
-                        "route": route,
-                        "file": fullPath
-                    };
-                    result.push(object);
+                    result.push(fullPath);
                 }
             }
         }
@@ -106,8 +97,30 @@ export async function getRoutes(dirPath: string, result: Route[] = []) {
     }
 }
 
-export async function getOpenAPIRoutes(yamlPath: string) {
-    const file = fs.readFileSync(yamlPath, "utf8");
+export function getRoutes(dirPath: string) {
+    const files = walkDir(dirPath);
+    const routes: Route[] = [];
+
+    for (const file of files) {
+        const extension = path.extname(file);
+        // /routes/a/b/c.ts -> /a/b/c
+        let route = file.replace(dirPath, "").replace(/\\/g, "/").replace(extension, "");
+        // /routes/index.ts -> /
+        if (route == "/index") { route = route.replace("/index", "/"); }
+        // /routes/a/b/index.ts -> /a/b
+        else if (route.endsWith("/index")) { route = route.replace("/index", ""); }
+        routes.push({
+            route,
+            file
+        });
+    }
+
+    checkDuplicateRoutes(routes);
+    return routes;
+}
+
+export function getOpenAPIRoutes(specPath: string) {
+    const file = fs.readFileSync(specPath, "utf8");
     const openapi = (yaml.load(file) as OpenAPI)["paths"];
     const routes = [];
     for (const route in openapi) {
@@ -117,7 +130,7 @@ export async function getOpenAPIRoutes(yamlPath: string) {
 }
 
 function checkDuplicateRoutes(routes: Route[]) {
-    // route 1 -> /a/ (/a/index.ts)
+    // route 1 -> /a (/a/index.ts)
     // route 2 -> /a  (/a.ts)
     // This is a duplicate route
     const routeSet = new Set<string>();
@@ -126,16 +139,33 @@ function checkDuplicateRoutes(routes: Route[]) {
         if (routeSet.has(route)) {
             throw new Error(`Duplicate route found: ${route}`);
         }
-  
         routeSet.add(route);
     }
-
 }
 
-
-async function main() {
-    console.log(await getRoutes("../routes"));
-
+function checkSpecRoutes(routes: Route[], specRoutes: string[]) {
+    if (routes.length !== specRoutes.length) {
+        if (process.env.NODE_ENV == "development" || process.env.NODE_ENV == undefined) {
+            console.warn("Not the exact same number of routes"); 
+        } else { 
+            throw new Error("Not the exact same number of routes"); 
+        }
+    }
+    
+    for (const { route } of routes) {
+        if (!specRoutes.includes(route)) {
+            if (process.env.NODE_ENV == "development" || process.env.NODE_ENV == undefined) {
+                console.warn(`Route not found in spec: ${route}`);
+            } else { 
+                throw new Error(`Route not found in spec: ${route}`); 
+            }
+        }
+    }
+    
 }
 
-main();
+// If this file is run directly, run the following code
+if (require.main === module) {
+    console.log(getRoutes(path.join(__dirname, "..", "routes")));
+    checkSpecRoutes(getRoutes(path.join(__dirname, "..", "routes")), getOpenAPIRoutes(path.join(__dirname, "..", "..", "openapi.yml")));
+}
