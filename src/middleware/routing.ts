@@ -84,7 +84,7 @@ function walkDir(dirPath: string, result: string[] = []) {
             } else {
                 // Add file path to result array
                 const extension = path.extname(fullPath);
-                if (extension == ".js" || extension == ".ts") {
+                if (!fullPath.endsWith(".d.ts") && (extension == ".js" || extension == ".ts")) {
                     result.push(fullPath);
                 }
             }
